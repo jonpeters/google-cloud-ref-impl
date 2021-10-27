@@ -1,5 +1,6 @@
 src/cloud-functions/reader/reader.zip
 src/cloud-functions/writer/writer.zip
+src/ui/node_modules
 terraform/.terraform
 terraform/key.json
 terraform/terraform.tfstate

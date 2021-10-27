@@ -1,6 +1,13 @@
-locals {
-  project_id               = "before-commit"
-  temp_storage_bucket_name = "temp-bucket-please-delete-me-121212"
+variable "temp_storage_bucket_name" {
+  type = string
+}
+
+variable "ui_bucket_name" {
+  type = string
+}
+
+variable "project_id" {
+  type = string
 }
 
 terraform {
@@ -15,14 +22,36 @@ terraform {
 provider "google" {
   credentials = file("key.json")
 
-  project = local.project_id
+  project = var.project_id
   region  = "us-central1"
   zone    = "us-central1-a"
 }
 
-# bucket to store deployment artifcats; e.g. cloud function zip packages
+# bucket to store deployment artifacts; e.g. cloud function zip packages
 resource "google_storage_bucket" "bucket" {
-  name = local.temp_storage_bucket_name
+  name = var.temp_storage_bucket_name
+}
+
+# bucket to store the user interface files
+resource "google_storage_bucket" "ui_bucket" {
+  name          = var.ui_bucket_name
+  force_destroy = true
+}
+
+# backend bucket config for load balancer
+resource "google_compute_backend_bucket" "ui_backend_bucket" {
+  name        = "ui-backend-bucket"
+  description = "The bucket holding the UI resources"
+  bucket_name = google_storage_bucket.ui_bucket.name
+  enable_cdn  = true
+}
+
+# make the bucket public for viewing
+# TODO remove this, and use API Gateway in front of cloud function
+resource "google_storage_bucket_iam_member" "member" {
+  bucket = google_storage_bucket.ui_bucket.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
 }
 
 # zip file for writer function
@@ -52,7 +81,7 @@ resource "google_cloudfunctions_function" "writer_function" {
   entry_point           = "writer"
 
   environment_variables = {
-    PROJECT_ID = local.project_id
+    PROJECT_ID = var.project_id
   }
 }
 
@@ -132,9 +161,11 @@ resource "google_compute_target_http_proxy" "default" {
 
 # url map
 resource "google_compute_url_map" "default" {
-  name            = "l7-xlb-url-map"
-  provider        = google
-  default_service = google_compute_backend_service.reader_function_backend_service.id
+  name     = "l7-xlb-url-map"
+  provider = google
+
+  # serve the ui by default
+  default_service = google_compute_backend_bucket.ui_backend_bucket.id
 
   path_matcher {
     name = "mysite"
@@ -149,7 +180,8 @@ resource "google_compute_url_map" "default" {
       service = google_compute_backend_service.writer_function_backend_service.id
     }
 
-    default_service = google_compute_backend_service.reader_function_backend_service.id
+    # serve the ui by default
+    default_service = google_compute_backend_bucket.ui_backend_bucket.id
   }
 
   host_rule {
