@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # must be the project ID for an existing project
-PROJECT_ID=before-commit
+PROJECT_ID=
 # the name to use while creating the temp storage bucket
-TEMP_BUCKET_NAME=temp-bucket-please-delete-me-121212
+TEMP_BUCKET_NAME=
 # the name to use while creating the UI bucket
-UI_BUCKET_NAME=the-ui-bucket-75757575
+UI_BUCKET_NAME=
 
 # ensure these variables are set
 if [ -z "$PROJECT_ID" ]
