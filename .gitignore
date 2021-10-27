@@ -1,0 +1,6 @@
+src/cloud-functions/reader/reader.zip
+src/cloud-functions/writer/writer.zip
+terraform/.terraform
+terraform/key.json
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
