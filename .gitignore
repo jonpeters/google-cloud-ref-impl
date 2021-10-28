@@ -5,3 +5,4 @@ terraform/.terraform
 terraform/key.json
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
+cloud_sql_proxy

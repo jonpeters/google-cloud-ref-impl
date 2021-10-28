@@ -13,6 +13,7 @@
     * [Cloud Build](https://console.developers.google.com/apis/api/cloudbuild.googleapis.com/overview?project=<PROJECT_ID>)
     * [Compute](https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=<PROJECT_ID>)
     * [Cloud Resource Manager](https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=<PROJECT_ID>)
+    * [Cloud SQL](https://console.developers.google.com/apis/api/sqladmin.googleapis.com/overview?project=<PROJECT_ID)
 5. Note that it *may* be necessary to manually enable the cloud billing service
 6. Set the `PROJECT_ID`, `TEMP_BUCKET_NAME`, and `UI_BUCKET_NAME` variables accordingly in the `deploy.sh` file
 7. `cd terraform && terraform init`
@@ -24,4 +25,4 @@
 
 1. After deployment, it may take 3-10 minutes for the changes to propagate to the edge nodes.
 2. Set `export TF_LOG=TRACE` to debug terraform issues
-
+3. To connect to the Cloud SQL database instance locally, use the [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test)

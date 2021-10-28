@@ -10,6 +10,13 @@ variable "project_id" {
   type = string
 }
 
+# TODO move these to secret manager
+locals {
+  database_user     = "me"
+  database_password = "changeme"
+  database_name     = "my-database"
+}
+
 terraform {
   required_providers {
     google = {
@@ -81,7 +88,10 @@ resource "google_cloudfunctions_function" "writer_function" {
   entry_point           = "writer"
 
   environment_variables = {
-    PROJECT_ID = var.project_id
+    CONNECTION_NAME = google_sql_database_instance.db.connection_name
+    USER            = local.database_user
+    PASSWORD        = local.database_password
+    DATABASE        = local.database_name
   }
 }
 
@@ -234,4 +244,40 @@ resource "google_compute_region_network_endpoint_group" "reader_function_neg" {
   cloud_function {
     function = google_cloudfunctions_function.reader_function.name
   }
+}
+
+# when you delete an instance, you can't reuse the name of the deleted instance until one week from the deletion date
+resource "random_id" "db_name_suffix" {
+  byte_length = 4
+}
+
+# cloud sql instance
+resource "google_sql_database_instance" "db" {
+  name                = "master-instance-${random_id.db_name_suffix.hex}"
+  database_version    = "POSTGRES_13"
+  region              = "us-central1"
+  deletion_protection = false
+
+  settings {
+    # Second-generation instance tiers are based on the machine
+    # type. See argument reference below.
+    tier = "db-f1-micro"
+  }
+}
+
+# create a database
+resource "google_sql_database" "database" {
+  name     = local.database_name
+  instance = google_sql_database_instance.db.name
+}
+
+# create a user
+resource "google_sql_user" "users" {
+  name     = local.database_user
+  instance = google_sql_database_instance.db.name
+  password = local.database_password
+}
+
+output "master-db-connection-name" {
+  value = google_sql_database_instance.db.connection_name
 }
