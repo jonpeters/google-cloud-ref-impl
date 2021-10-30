@@ -18,14 +18,13 @@
     * [Compute](https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=<PROJECT_ID>)
     * [Cloud Resource Manager](https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=<PROJECT_ID>)
     * [Cloud SQL](https://console.developers.google.com/apis/api/sqladmin.googleapis.com/overview?project=<PROJECT_ID)
-5. Note that it *may* be necessary to manually enable the cloud billing service
-6. Set the `PROJECT_ID`, `TEMP_BUCKET_NAME`, and `UI_BUCKET_NAME` variables accordingly in the `deploy.sh` file
-7. `cd terraform && terraform init`
-8. Run `./deploy.sh`
+5. Set the `PROJECT_ID`, `TEMP_BUCKET_NAME`, and `UI_BUCKET_NAME` variables accordingly in the `deploy.sh` file
+6. `cd terraform && terraform init`
+7. Run `./deploy.sh`
     * Note that during the deploy process, a prompt will appear in the shell that will require confirmation
-9. [Find the IP address of the load balancer](https://console.cloud.google.com/net-services/loadbalancing/loadBalancers/list?project=<PROJECT_ID>)
+8. [Find the IP address of the load balancer](https://console.cloud.google.com/net-services/loadbalancing/loadBalancers/list?project=<PROJECT_ID>)
     * Navigate to the UI: `http://<IP_ADDRESS>/index.html`
-10. To teardown all infrastructure, run `cd terraform && terraform destroy`
+9. To teardown all infrastructure, run `cd terraform && terraform destroy`
 
 ### Notes
 
