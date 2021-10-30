@@ -1,5 +1,9 @@
 # Google Cloud Reference Implementation
 
+
+###### A quickstart project using Terraform to configure a typical website and API, consisting of a Load Balancer, 2 Cloud Functions to handle reading and writing, 1 Cloud Storage bucket serving a React website, and a Cloud SQL Postgres instance.
+
+
 ### Setup
 
 1. Install the Google Cloud SDK (glcoud, gsutil, etc.)
