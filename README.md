@@ -19,7 +19,9 @@
 7. `cd terraform && terraform init`
 8. Run `./deploy.sh`
     * Note that during the deploy process, a prompt will appear in the shell that will require confirmation
-9. To teardown all infrastructure, run `cd terraform && terraform destroy`
+9. [Find the IP address of the load balancer](https://console.cloud.google.com/net-services/loadbalancing/loadBalancers/list?project=<PROJECT_ID>)
+    * Navigate to the UI: `http://<IP_ADDRESS>/index.html`
+10. To teardown all infrastructure, run `cd terraform && terraform destroy`
 
 ### Notes
 

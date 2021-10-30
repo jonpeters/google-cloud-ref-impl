@@ -117,6 +117,13 @@ resource "google_cloudfunctions_function" "reader_function" {
   source_archive_object = google_storage_bucket_object.reader_archive.name
   trigger_http          = true
   entry_point           = "reader"
+
+  environment_variables = {
+    CONNECTION_NAME = google_sql_database_instance.db.connection_name
+    USER            = local.database_user
+    PASSWORD        = local.database_password
+    DATABASE        = local.database_name
+  }
 }
 
 # make reader function public
