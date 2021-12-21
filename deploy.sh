@@ -55,7 +55,8 @@ cd terraform && \
     cd ..
 
 # build the ui
-cd src/ui/ && npm run build && cd ../..
+export NODE_OPTIONS=--openssl-legacy-provider
+cd src/ui/ && npm install && npm run build && cd ../..
 
 # clear the bucket of previously built artifacts
 gsutil -m rm -r "gs://$UI_BUCKET_NAME/*"
