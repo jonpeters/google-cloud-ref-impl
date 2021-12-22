@@ -1,4 +1,4 @@
-src/cloud-functions/reader/reader.zip
+src/cloud-functions/http-handler/http-handler.zip
 src/cloud-functions/writer/writer.zip
 src/ui/node_modules
 terraform/.terraform
@@ -6,3 +6,4 @@ terraform/key.json
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 cloud_sql_proxy
+venv/

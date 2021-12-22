@@ -34,13 +34,13 @@ fi
 
 # clean up previous build artifacts
 rm -f ./src/cloud-functions/writer/writer.zip
-rm -f ./src/cloud-functions/reader/reader.zip
+rm -f ./src/cloud-functions/http-handler/http-handler.zip
 
 # need to manually (i.e. via bash, not terraform) create zip files because of lacking ARM64 support
 cd src/cloud-functions/writer
 zip writer.zip *
-cd ../reader
-zip reader.zip *
+cd ../http-handler
+zip http-handler.zip *
 cd ../../..
 
 cd terraform && \

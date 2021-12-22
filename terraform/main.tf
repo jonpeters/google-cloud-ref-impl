@@ -68,11 +68,11 @@ resource "google_storage_bucket_object" "writer_archive" {
   source = "../src/cloud-functions/writer/writer.zip"
 }
 
-# zip file for reader function
-resource "google_storage_bucket_object" "reader_archive" {
-  name   = "reader.zip"
+# zip file for http-handler function
+resource "google_storage_bucket_object" "http_handler_archive" {
+  name   = "http-handler.zip"
   bucket = google_storage_bucket.bucket.name
-  source = "../src/cloud-functions/reader/reader.zip"
+  source = "../src/cloud-functions/http-handler/http-handler.zip"
 }
 
 # create the writer cloud function
@@ -106,17 +106,17 @@ resource "google_cloudfunctions_function_iam_member" "writer_invoker" {
   member = "allUsers"
 }
 
-# create the reader cloud function
-resource "google_cloudfunctions_function" "reader_function" {
-  name        = "reader-function"
-  description = "Reader Function"
-  runtime     = "nodejs14"
+# create the http-handler cloud function
+resource "google_cloudfunctions_function" "http_handler_function" {
+  name        = "http-handler-function"
+  description = "HTTP Handler Function"
+  runtime     = "python39"
 
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.bucket.name
-  source_archive_object = google_storage_bucket_object.reader_archive.name
+  source_archive_object = google_storage_bucket_object.http_handler_archive.name
   trigger_http          = true
-  entry_point           = "reader"
+  entry_point           = "http_handler"
 
   environment_variables = {
     CONNECTION_NAME = google_sql_database_instance.db.connection_name
@@ -126,12 +126,12 @@ resource "google_cloudfunctions_function" "reader_function" {
   }
 }
 
-# make reader function public
+# make http_handler function public
 # TODO remove this, and use API Gateway in front of cloud function
-resource "google_cloudfunctions_function_iam_member" "reader_invoker" {
-  project        = google_cloudfunctions_function.reader_function.project
-  region         = google_cloudfunctions_function.reader_function.region
-  cloud_function = google_cloudfunctions_function.reader_function.name
+resource "google_cloudfunctions_function_iam_member" "http_handler_invoker" {
+  project        = google_cloudfunctions_function.http_handler_function.project
+  region         = google_cloudfunctions_function.http_handler_function.region
+  cloud_function = google_cloudfunctions_function.http_handler_function.name
 
   role   = "roles/cloudfunctions.invoker"
   member = "allUsers"
@@ -189,12 +189,12 @@ resource "google_compute_url_map" "default" {
 
     path_rule {
       paths   = ["/read"]
-      service = google_compute_backend_service.reader_function_backend_service.id
+      service = google_compute_backend_service.http_handler_function_backend_service.id
     }
 
     path_rule {
       paths   = ["/write"]
-      service = google_compute_backend_service.writer_function_backend_service.id
+      service = google_compute_backend_service.http_handler_function_backend_service.id
     }
 
     # serve the ui by default
@@ -230,26 +230,26 @@ resource "google_compute_region_network_endpoint_group" "writer_function_neg" {
   }
 }
 
-# backend servic for reader function
-resource "google_compute_backend_service" "reader_function_backend_service" {
-  name                  = "l7-xlb-backend-service-reader"
+# backend service for http-handler function
+resource "google_compute_backend_service" "http_handler_function_backend_service" {
+  name                  = "l7-xlb-backend-service-http-handler"
   provider              = google
   protocol              = "HTTP"
   load_balancing_scheme = "EXTERNAL"
   backend {
-    group           = google_compute_region_network_endpoint_group.reader_function_neg.id
+    group           = google_compute_region_network_endpoint_group.http_handler_function_neg.id
     balancing_mode  = "UTILIZATION"
     capacity_scaler = 1.0
   }
 }
 
-# serverless network endpoint group for reader function
-resource "google_compute_region_network_endpoint_group" "reader_function_neg" {
-  name                  = "reader-function-neg"
+# serverless network endpoint group for http-handler function
+resource "google_compute_region_network_endpoint_group" "http_handler_function_neg" {
+  name                  = "http-handler-function-neg"
   network_endpoint_type = "SERVERLESS"
   region                = "us-central1"
   cloud_function {
-    function = google_cloudfunctions_function.reader_function.name
+    function = google_cloudfunctions_function.http_handler_function.name
   }
 }
 
