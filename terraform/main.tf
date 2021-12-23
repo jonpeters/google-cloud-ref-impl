@@ -61,11 +61,11 @@ resource "google_storage_bucket_iam_member" "member" {
   member = "allUsers"
 }
 
-# zip file for writer function
-resource "google_storage_bucket_object" "writer_archive" {
-  name   = "writer.zip"
+# zip file for pubsub function
+resource "google_storage_bucket_object" "pubsub_archive" {
+  name   = "pubsub.zip"
   bucket = google_storage_bucket.bucket.name
-  source = "../src/cloud-functions/writer/writer.zip"
+  source = "../src/cloud-functions/pubsub/pubsub.zip"
 }
 
 # zip file for http-handler function
@@ -75,17 +75,24 @@ resource "google_storage_bucket_object" "http_handler_archive" {
   source = "../src/cloud-functions/http-handler/http-handler.zip"
 }
 
-# create the writer cloud function
-resource "google_cloudfunctions_function" "writer_function" {
-  name        = "writer-function"
-  description = "Writer Function"
-  runtime     = "nodejs14"
+# create the pubsub cloud function
+resource "google_cloudfunctions_function" "pubsub_function" {
+  name        = "pubsub-function"
+  description = "pubsub Function"
+  runtime     = "python39"
 
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.bucket.name
-  source_archive_object = google_storage_bucket_object.writer_archive.name
-  trigger_http          = true
-  entry_point           = "writer"
+  source_archive_object = google_storage_bucket_object.pubsub_archive.name
+  entry_point           = "pubsub"
+
+   event_trigger {
+    event_type = "providers/cloud.pubsub/eventTypes/topic.publish"
+    resource   =  google_pubsub_topic.example_topic.name
+    failure_policy {
+      retry = true
+    }
+  }
 
   environment_variables = {
     CONNECTION_NAME = google_sql_database_instance.db.connection_name
@@ -95,12 +102,12 @@ resource "google_cloudfunctions_function" "writer_function" {
   }
 }
 
-# make writer function public
+# make pubsub function public
 # TODO remove this, and use API Gateway in front of cloud function
-resource "google_cloudfunctions_function_iam_member" "writer_invoker" {
-  project        = google_cloudfunctions_function.writer_function.project
-  region         = google_cloudfunctions_function.writer_function.region
-  cloud_function = google_cloudfunctions_function.writer_function.name
+resource "google_cloudfunctions_function_iam_member" "pubsub_invoker" {
+  project        = google_cloudfunctions_function.pubsub_function.project
+  region         = google_cloudfunctions_function.pubsub_function.region
+  cloud_function = google_cloudfunctions_function.pubsub_function.name
 
   role   = "roles/cloudfunctions.invoker"
   member = "allUsers"
@@ -123,6 +130,8 @@ resource "google_cloudfunctions_function" "http_handler_function" {
     USER            = local.database_user
     PASSWORD        = local.database_password
     DATABASE        = local.database_name
+    TOPIC_ID        = google_pubsub_topic.example_topic.name
+    GCP_PROJECT     = var.project_id
   }
 }
 
@@ -208,25 +217,25 @@ resource "google_compute_url_map" "default" {
 }
 
 # backend service with custom request and response headers
-resource "google_compute_backend_service" "writer_function_backend_service" {
-  name                  = "l7-xlb-backend-service-writer"
+resource "google_compute_backend_service" "pubsub_function_backend_service" {
+  name                  = "l7-xlb-backend-service-pubsub"
   provider              = google
   protocol              = "HTTP"
   load_balancing_scheme = "EXTERNAL"
   backend {
-    group           = google_compute_region_network_endpoint_group.writer_function_neg.id
+    group           = google_compute_region_network_endpoint_group.pubsub_function_neg.id
     balancing_mode  = "UTILIZATION"
     capacity_scaler = 1.0
   }
 }
 
-# serverless network endpoint group for writer function
-resource "google_compute_region_network_endpoint_group" "writer_function_neg" {
-  name                  = "writer-function-neg"
+# serverless network endpoint group for pubsub function
+resource "google_compute_region_network_endpoint_group" "pubsub_function_neg" {
+  name                  = "pubsub-function-neg"
   network_endpoint_type = "SERVERLESS"
   region                = "us-central1"
   cloud_function {
-    function = google_cloudfunctions_function.writer_function.name
+    function = google_cloudfunctions_function.pubsub_function.name
   }
 }
 
@@ -287,4 +296,8 @@ resource "google_sql_user" "users" {
 
 output "master-db-connection-name" {
   value = google_sql_database_instance.db.connection_name
+}
+
+resource "google_pubsub_topic" "example_topic" {
+  name = "example-topic"
 }

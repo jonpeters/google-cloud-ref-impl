@@ -1,7 +1,8 @@
 src/cloud-functions/http-handler/http-handler.zip
-src/cloud-functions/writer/writer.zip
+src/cloud-functions/pubsub/pubsub.zip
 src/ui/node_modules
 terraform/.terraform
+terraform/.terraform.lock.hcl
 terraform/key.json
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
