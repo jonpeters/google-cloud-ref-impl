@@ -1,8 +1,9 @@
 from db import db
 from sqlalchemy import text
+import functions_framework
 
-
-def pubsub(event, context):
+@functions_framework.cloud_event
+def entry_point(event, context=None):
     """Background Cloud Function to be triggered by Pub/Sub.
     Args:
          event (dict):  The dictionary with data specific to this type of
@@ -25,10 +26,8 @@ def pubsub(event, context):
     """
     import base64
 
-    print(str(event))
-
-    if 'data' in event:
-        message_body = base64.b64decode(event['data']).decode('utf-8')
+    if event.data:
+        message_body = base64.b64decode(event.data.get("message").get("data")).decode("UTF-8")
 
     with db.connect() as conn:
         conn.execute(

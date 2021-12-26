@@ -5,9 +5,11 @@ from concurrent import futures
 from google.cloud import pubsub_v1
 from typing import Callable, List
 import os
+import functions_framework
 
 
-def http_handler(request: Request):
+@functions_framework.http
+def entry_point(request: Request):
     method = request.method.upper()
 
     with db.connect() as conn:
@@ -20,9 +22,11 @@ def http_handler(request: Request):
 
     return Response(status=200)
 
+
 def publish(messages: List[str]):
     publisher = pubsub_v1.PublisherClient()
-    topic_path = publisher.topic_path(os.getenv("GCP_PROJECT"), os.getenv("TOPIC_ID"))
+    topic_path = publisher.topic_path(
+        os.getenv("GCP_PROJECT"), os.getenv("TOPIC_ID"))
     publish_futures = []
 
     def get_callback(

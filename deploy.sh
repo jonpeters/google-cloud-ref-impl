@@ -51,7 +51,7 @@ cd terraform && \
     terraform apply \
         -var "project_id=$PROJECT_ID" \
         -var "temp_storage_bucket_name=$TEMP_BUCKET_NAME" \
-        -var "ui_bucket_name=$UI_BUCKET_NAME" && \
+        -var "ui_bucket_name=$UI_BUCKET_NAME" -auto-approve && \
     cd ..
 
 # build the ui

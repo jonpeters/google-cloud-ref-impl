@@ -84,7 +84,7 @@ resource "google_cloudfunctions_function" "pubsub_function" {
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.bucket.name
   source_archive_object = google_storage_bucket_object.pubsub_archive.name
-  entry_point           = "pubsub"
+  entry_point           = "entry_point"
 
    event_trigger {
     event_type = "providers/cloud.pubsub/eventTypes/topic.publish"
@@ -99,6 +99,10 @@ resource "google_cloudfunctions_function" "pubsub_function" {
     USER            = local.database_user
     PASSWORD        = local.database_password
     DATABASE        = local.database_name
+  }
+
+  labels = {
+    directory_name = "pubsub"
   }
 }
 
@@ -123,7 +127,7 @@ resource "google_cloudfunctions_function" "http_handler_function" {
   source_archive_bucket = google_storage_bucket.bucket.name
   source_archive_object = google_storage_bucket_object.http_handler_archive.name
   trigger_http          = true
-  entry_point           = "http_handler"
+  entry_point           = "entry_point"
 
   environment_variables = {
     CONNECTION_NAME = google_sql_database_instance.db.connection_name
@@ -132,6 +136,10 @@ resource "google_cloudfunctions_function" "http_handler_function" {
     DATABASE        = local.database_name
     TOPIC_ID        = google_pubsub_topic.example_topic.name
     GCP_PROJECT     = var.project_id
+  }
+
+  labels = {
+    directory_name = "http-handler"
   }
 }
 

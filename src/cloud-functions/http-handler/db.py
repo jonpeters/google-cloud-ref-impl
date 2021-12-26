@@ -14,19 +14,26 @@ def init():
     PASSWORD = os.getenv("PASSWORD")
     DATABASE = os.getenv("DATABASE")
     CONNECTION_NAME = os.getenv("CONNECTION_NAME")
+    HOST = os.getenv("HOST")
 
-    return sqlalchemy.create_engine(
-        sqlalchemy.engine.url.URL.create(
-            drivername="postgresql+pg8000",
-            username=USER,
-            password=PASSWORD,
-            database=DATABASE,
-            query={
-                "unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(CONNECTION_NAME)
-            }
-        ),
-        **db_config
-    )
+    engine_args = {
+        "drivername": "postgresql+pg8000",
+        "username": USER,
+        "password": PASSWORD,
+        "database": DATABASE,
+    }
+
+    # local / cloud sql proxy
+    if HOST:
+        engine_args["host"] = HOST
+        engine_args["port"] = 5432
+    # cloud
+    else:
+        engine_args["query"] = {
+            "unix_sock": f"/cloudsql/{CONNECTION_NAME}/.s.PGSQL.5432"
+        }
+
+    return sqlalchemy.create_engine(sqlalchemy.engine.url.URL.create(**engine_args), **db_config)
 
 
 def create_tables():

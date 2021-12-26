@@ -8,3 +8,5 @@ terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 cloud_sql_proxy
 venv/
+__pycache__/
+*.pyc
