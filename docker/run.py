@@ -45,13 +45,15 @@ env_var = export_command.split(" ")[1]
 env_var_name, env_var_value = env_var.split("=")
 os.environ[env_var_name] = env_var_value
 
+# save for later
+topic_paths = []
 
 # read the cloud functions triggered by pubsub and create the topics they listen to
 expression = parse(
-    """$.resources[?type=="google_cloudfunctions_function"].instances[*].attributes.
-    event_trigger[?event_type=="providers/cloud.pubsub/eventTypes/topic.publish"].resource""")
-for resource in {match.value for match in expression.find(tf_state)}:
-    create_topic(resource)
+    """$.resources[?type=="google_pubsub_topic"].instances[*].attributes.id""")
+for topic_path in {match.value for match in expression.find(tf_state)}:
+    create_topic(topic_path)
+    topic_paths.append(topic_path)
 
 # read each function, and start each on its own port
 port = 8080
@@ -78,7 +80,10 @@ for cf_dir in os.scandir("./workspace/src/cloud-functions"):
         directory_name=="{dir_name}"].attributes.event_trigger[?event_type="providers/cloud.pubsub/eventTypes/topic.publish"].resource""")
     matches = expression.find(tf_state)
     if len(matches):
-        create_subscription(matches[0].value, f"http://localhost:{port}")
+        resource_name = matches[0].value
+        # resolve the resource name to the full topic path
+        topic_path = [topic_path for topic_path in topic_paths if resource_name in topic_path ][0]
+        create_subscription(topic_path, f"http://localhost:{port}")
 
     # append any nginx config snippets to the nginx config string
     nginx_file_path = f"{cf_dir.path}/nginx"
