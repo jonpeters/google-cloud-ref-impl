@@ -1,5 +1,3 @@
-src/cloud-functions/http-handler/http-handler.zip
-src/cloud-functions/pubsub/pubsub.zip
 src/ui/node_modules
 terraform/.terraform
 terraform/.terraform.lock.hcl
@@ -10,3 +8,4 @@ cloud_sql_proxy
 venv/
 __pycache__/
 *.pyc
+*.zip

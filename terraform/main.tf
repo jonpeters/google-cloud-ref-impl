@@ -27,8 +27,6 @@ terraform {
 }
 
 provider "google" {
-  credentials = file("key.json")
-
   project = var.project_id
   region  = "us-central1"
   zone    = "us-central1-a"
@@ -65,14 +63,14 @@ resource "google_storage_bucket_iam_member" "member" {
 resource "google_storage_bucket_object" "pubsub_archive" {
   name   = "pubsub.zip"
   bucket = google_storage_bucket.bucket.name
-  source = "../src/cloud-functions/pubsub/pubsub.zip"
+  source = "../terraform/pubsub.zip"
 }
 
 # zip file for http-handler function
 resource "google_storage_bucket_object" "http_handler_archive" {
   name   = "http-handler.zip"
   bucket = google_storage_bucket.bucket.name
-  source = "../src/cloud-functions/http-handler/http-handler.zip"
+  source = "../terraform/http-handler.zip"
 }
 
 # create the pubsub cloud function

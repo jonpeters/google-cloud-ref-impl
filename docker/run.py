@@ -1,6 +1,5 @@
 import os
 import json
-from jsonpath_rw import jsonpath
 from jsonpath_rw_ext import parse
 from google.cloud import pubsub_v1
 
@@ -26,11 +25,12 @@ def read_output_value(output_name):
     return expression.find(tf_state)[0].value.get("value")
 
 
-# TODO read this from command line args
-project_id = "yet-another-335918"
+# get the project context currently set in gcloud
+project_id = os.popen("gcloud config get-value project").read()
+
 
 # read the terraform state file
-tf_state = json.load(open("terraform/terraform.tfstate"))
+tf_state = json.load(open("/app/terraform.tfstate"))
 
 # start cloud_sql_proxy
 master_instance_name = read_output_value("master-db-connection-name")
@@ -38,7 +38,8 @@ os.system(
     f"./cloud_sql_proxy -instances={master_instance_name}=tcp:5432 &>/dev/null &")
 
 # start pubsub emulator
-os.system(f"gcloud beta emulators pubsub start --project=\"{project_id}\" &")
+os.system(
+    f"gcloud --quiet beta emulators pubsub start --project=\"{project_id}\" &")
 export_command = os.popen("gcloud beta emulators pubsub env-init").read()
 env_var = export_command.split(" ")[1]
 env_var_name, env_var_value = env_var.split("=")
@@ -52,9 +53,10 @@ expression = parse(
 for resource in {match.value for match in expression.find(tf_state)}:
     create_topic(resource)
 
-# start each function inside functions-framework
+# read each function, and start each on its own port
 port = 8080
-for cf_dir in os.scandir("src/cloud-functions"):
+nginx_config = ""
+for cf_dir in os.scandir("./workspace/src/cloud-functions"):
     dir_name = cf_dir.path.split("/")[-1]
     expression = parse(
         f"""$.resources[?type=="google_cloudfunctions_function"].instances[?attributes.labels.
@@ -65,12 +67,12 @@ for cf_dir in os.scandir("src/cloud-functions"):
     env_vars_formatted = " ".join(
         [f"{key}={value}" for key, value in env_vars.items()])
 
-    ff_command = f"""{env_vars_formatted} functions-framework --port {port} --source ./{cf_dir.path}/main.py --target entry_point --debug &>/dev/null &""" 
-
+    # start hosting the function within functions framework; note that it is assumed every function has an "entry_point" function
+    ff_command = f"""{env_vars_formatted} functions-framework --port {port} --source ./{cf_dir.path}/main.py --target entry_point --debug &>/dev/null &"""
     os.system(ff_command)
     print(f"started function '{dir_name}'")
 
-    # determine if this is a function that subscribes to a topic
+    # for functions subscribing to topics, create subscription
     expression = parse(
         f"""$.resources[?type=="google_cloudfunctions_function"].instances[?attributes.labels.
         directory_name=="{dir_name}"].attributes.event_trigger[?event_type="providers/cloud.pubsub/eventTypes/topic.publish"].resource""")
@@ -78,4 +80,27 @@ for cf_dir in os.scandir("src/cloud-functions"):
     if len(matches):
         create_subscription(matches[0].value, f"http://localhost:{port}")
 
+    # append any nginx config snippets to the nginx config string
+    nginx_file_path = f"{cf_dir.path}/nginx"
+    if os.path.exists(nginx_file_path):
+        with open(nginx_file_path) as file:
+            contents = file.read().replace("$URL", f"http://localhost:{port}")
+            nginx_config = f"{nginx_config}\t{contents}\n"
+
+    # each function is individually hosted, and thusly needs its own port
     port += 1
+
+# create the properly formatted nginx server block
+nginx_site_config = f""" 
+server {{ 
+    listen 80;
+    listen [::]:80;
+    root /var/www/localhost/html;
+    server_name localhost;
+    {nginx_config}
+}}
+"""
+
+# write the nginx config
+with open("/etc/nginx/sites-available/localhost", "w") as f:
+    f.write(nginx_site_config)

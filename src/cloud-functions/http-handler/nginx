@@ -1,0 +1,8 @@
+
+location /read {
+    proxy_pass $URL;
+}
+
+location /write {
+    proxy_pass $URL;
+}
