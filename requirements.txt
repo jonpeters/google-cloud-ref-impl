@@ -4,3 +4,5 @@ google-cloud-pubsub==2.9.0
 Flask==2.0.2
 functions-framework==3.*
 pg8000==1.23.0
+jsonpath_rw==1.4.0
+jsonpath_rw_ext==1.2.2

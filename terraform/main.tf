@@ -1,11 +1,3 @@
-variable "temp_storage_bucket_name" {
-  type = string
-}
-
-variable "ui_bucket_name" {
-  type = string
-}
-
 variable "project_id" {
   type = string
 }
@@ -34,12 +26,12 @@ provider "google" {
 
 # bucket to store deployment artifacts; e.g. cloud function zip packages
 resource "google_storage_bucket" "bucket" {
-  name = var.temp_storage_bucket_name
+  name = "temp-storage-bucket-${random_id.db_name_suffix.hex}"
 }
 
 # bucket to store the user interface files
 resource "google_storage_bucket" "ui_bucket" {
-  name          = var.ui_bucket_name
+  name          = "ui-bucket-${random_id.db_name_suffix.hex}"
   force_destroy = true
 }
 

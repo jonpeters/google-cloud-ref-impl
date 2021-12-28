@@ -1,34 +1,11 @@
 #!/bin/bash
 
-# must be the project ID for an existing project
-PROJECT_ID=yet-another-335918
-# the name to use while creating the temp storage bucket
-TEMP_BUCKET_NAME=jon_some_temp_bucket
-# the name to use while creating the UI bucket
-UI_BUCKET_NAME=jon_the_ui_bucket
+PROJECT_ID=$(gcloud config get-value project)
 
-# ensure these variables are set
-if [ -z "$PROJECT_ID" ]
-then
-      echo "PROJECT_ID is not set"
-      exit
-fi
-
-if [ -z "$TEMP_BUCKET_NAME" ]
-then
-      echo "TEMP_BUCKET_NAME is not set"
-      exit
-fi
-
-if [ -z "$UI_BUCKET_NAME" ]
-then
-      echo "UI_BUCKET_NAME is not set"
-      exit
-fi
+echo "Using project ID $PROJECT_ID"
 
 # init the terraform directory before script execution
-if [ ! -d "./terraform/.terraform" ]
-then 
+if [ ! -d "./terraform/.terraform" ]; then
     cd ./terraform && terraform init && cd ..
 fi
 
@@ -37,7 +14,8 @@ rm -rf build
 mkdir build
 
 # zip each cloud function
-PYTHON=$(cat <<EOF
+PYTHON=$(
+    cat <<EOF
 import os
 import shutil
 for cf_dir in os.scandir("./src/cloud-functions"):
@@ -56,16 +34,24 @@ EOF
 
 python3 -c "$PYTHON"
 
-cd terraform && \
-    terraform plan \
-        -var "project_id=$PROJECT_ID" \
-        -var "temp_storage_bucket_name=$TEMP_BUCKET_NAME" \
-        -var "ui_bucket_name=$UI_BUCKET_NAME" && \
-    terraform apply \
-        -var "project_id=$PROJECT_ID" \
-        -var "temp_storage_bucket_name=$TEMP_BUCKET_NAME" \
-        -var "ui_bucket_name=$UI_BUCKET_NAME" -auto-approve && \
-    cd ..
+cd terraform &&
+    terraform plan -var "project_id=$PROJECT_ID" &&
+    terraform apply -var "project_id=$PROJECT_ID" -auto-approve && cd ..
+
+PYTHON=$(
+    cat <<EOF
+from jsonpath_rw_ext import parse
+import json
+tf_state = json.load(open("./terraform/terraform.tfstate"))
+expression = parse("$.resources[?name==\"ui_backend_bucket\"].instances[0].attributes.bucket_name")
+bucket_name = expression.find(tf_state)[0].value
+print(bucket_name)
+EOF
+)
+
+UI_BUCKET_NAME=$(python3 -c "$PYTHON")
+
+echo $UI_BUCKET_NAME
 
 # build the ui
 export NODE_OPTIONS=--openssl-legacy-provider
