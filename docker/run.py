@@ -112,9 +112,32 @@ server {{
     root /var/www/localhost/html;
     server_name localhost;
     {nginx_config}
+
+    location /index.html {{
+        proxy_pass http://localhost:3000/index.html;
+    }}
+
+    location ^~ /static/ {{
+        proxy_pass http://localhost:3000$request_uri;
+    }}
+
+    location /socksjs-node {{
+        proxy_pass http://localhost:3000$request_uri;
+    }}
+
+    location /manifest.json {{
+        proxy_pass http://localhost:3000$request_uri;
+    }}
+
+    location /logo192.png {{
+        proxy_pass http://localhost:3000$request_uri;
+    }}
 }}
 """
 
 # write the nginx config
 with open("/etc/nginx/sites-available/localhost", "w") as f:
     f.write(nginx_site_config)
+
+# start the ui
+os.system("npm install --prefix ./workspace/src/ui && npm start --prefix ./workspace/src/ui &")

@@ -1,12 +1,14 @@
 FROM ubuntu:20.04
 WORKDIR /app
 RUN apt-get update
-RUN apt-get install -y curl dialog apt-utils zip software-properties-common gnupg wget default-jre
+RUN DEBIAN_FRONTEND=noninteractive TZ=America/New_York \
+    apt-get install -y curl dialog apt-utils zip software-properties-common gnupg wget default-jre nodejs npm
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update
 RUN apt install -y python3.9 python3-pip nginx
 RUN touch /etc/nginx/sites-available/localhost
 RUN ln -s /etc/nginx/sites-available/localhost /etc/nginx/sites-enabled/
+RUN mkdir -p /var/www/localhost/html
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 RUN curl -sSL https://sdk.cloud.google.com | bash
