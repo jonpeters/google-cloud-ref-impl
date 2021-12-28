@@ -63,14 +63,14 @@ resource "google_storage_bucket_iam_member" "member" {
 resource "google_storage_bucket_object" "pubsub_archive" {
   name   = "pubsub.zip"
   bucket = google_storage_bucket.bucket.name
-  source = "../terraform/pubsub.zip"
+  source = "../build/pubsub.zip"
 }
 
 # zip file for http-handler function
 resource "google_storage_bucket_object" "http_handler_archive" {
   name   = "http-handler.zip"
   bucket = google_storage_bucket.bucket.name
-  source = "../terraform/http-handler.zip"
+  source = "../build/http-handler.zip"
 }
 
 # create the pubsub cloud function

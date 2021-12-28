@@ -69,6 +69,15 @@ for cf_dir in os.scandir("./workspace/src/cloud-functions"):
     env_vars_formatted = " ".join(
         [f"{key}={value}" for key, value in env_vars.items()])
 
+    # create symlinks to shared modules
+    for entry in os.listdir("./workspace/src/shared"):
+        if entry == "__pycache__":
+            continue
+        entry_path = f"{cf_dir.path}/{entry}"
+        if os.path.exists(entry_path):
+            os.remove(entry_path)
+        os.system(f"ln -s ../../shared/{entry} {cf_dir.path}/{entry}")
+
     # start hosting the function within functions framework; note that it is assumed every function has an "entry_point" function
     ff_command = f"""{env_vars_formatted} functions-framework --port {port} --source ./{cf_dir.path}/main.py --target entry_point --debug &>/dev/null &"""
     os.system(ff_command)
