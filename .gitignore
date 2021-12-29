@@ -10,3 +10,4 @@ __pycache__/
 *.pyc
 *.zip
 build/
+*-key.json

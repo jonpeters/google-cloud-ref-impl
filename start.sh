@@ -10,4 +10,10 @@ docker run -d -v ~/.config:/root/.config \
     -v $(pwd):/app/workspace \
     --name $CONTAINER_NAME \
     -p $PORT:80 \
-    $CONTAINER_NAME 
+    -e BUILD_UI=$BUILD_UI \
+    $CONTAINER_NAME
+
+# wait for the the UI to be fully build (so deploy.sh script execution halts)
+if ! [ -z "$BUILD_UI" ]; then
+    docker wait $CONTAINER_NAME
+fi

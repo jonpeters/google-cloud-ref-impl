@@ -2,6 +2,10 @@ variable "project_id" {
   type = string
 }
 
+output "output_project_id" {
+  value = var.project_id
+}
+
 # TODO move these to secret manager
 locals {
   database_user     = "me"
@@ -76,9 +80,9 @@ resource "google_cloudfunctions_function" "pubsub_function" {
   source_archive_object = google_storage_bucket_object.pubsub_archive.name
   entry_point           = "entry_point"
 
-   event_trigger {
+  event_trigger {
     event_type = "providers/cloud.pubsub/eventTypes/topic.publish"
-    resource   =  google_pubsub_topic.example_topic.name
+    resource   = google_pubsub_topic.example_topic.name
     failure_policy {
       retry = true
     }
