@@ -3,7 +3,7 @@
 
 ###### A template project to illustrate how to build a typical web-based application in a serverless fashion on the Google Cloud Platform.
 
-###### The intended purpose of this project is to provide a functional examaple of a pure serverless application to serve as a starting point for new projects. All GCP resources are defined in a Terraform file. A docker container is provided to support local development (debugging, etc.).
+###### The intended purpose of this project is to provide a functional example of a serverless application to serve as a starting point for new projects. All GCP resources are defined in a Terraform file. A docker container is provided to support local development (debugging, etc.).
 
 ###### A crude React UI POSTs data to the address of the load balancer, which forwards the request to the HTTP-handling cloud function. The cloud function publishes the body of the request to pubsub. A cloud-event function then asynchronously receives the message and writes the content to the PostgreSQL instance. The same HTTP-handling cloud function is then used to read data in a separate GET request from the UI.
 
