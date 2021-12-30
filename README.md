@@ -26,7 +26,7 @@
     - Enable all required APIs on the project
     - Create a service account
     - Download the service account's key file
-    - Example: `./setup --project-id my-project-id --display-name "My Display Name"`
+    - Example: `./setup.sh --project-id my-project-id --display-name "My Display Name"`
 2. Run `deploy.sh`, which will do the following:
     - Install terraform
     - Detect a virtual environment and prompt the user to create one if necessary
