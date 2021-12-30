@@ -1,33 +1,51 @@
 # Google Cloud Reference Implementation
 
 
-###### A quickstart project using Terraform to configure a typical website and API, consisting of a Load Balancer, 2 Cloud Functions to handle reading and writing, 1 Cloud Storage bucket serving a React website, and a Cloud SQL Postgres instance.
+###### A template project to illustrate how to build a typical web-based application in a serverless fashion on the Google Cloud Platform.
 
+###### The intended purpose of this project is to provide a functional examaple of a pure serverless application to serve as a starting point for new projects. All GCP resources are defined in a Terraform file. Also of note is that a docker container is provided to support local development (debugging, etc.).
+
+### Architecture
+
+![GCP Architecture](etc/gcp.png)
+
+
+### Prerequisites
+1. A Google Cloud account with billing enabled
 
 ### Setup
 
-1. Install the Google Cloud SDK (glcoud, gsutil, etc.)
-    * `gsutil` is needed to upload unzipped files to a bucket
-2. Satisfy [these GCP prerequisites](https://learn.hashicorp.com/tutorials/terraform/google-cloud-platform-build?in=terraform/gcp-get-started) 
-    * Ensure to add the `Cloud Functions Admin` permission to the service account (in addition to `Editor`)
-3. Sym-link key.json to the key file
-    * `cd terraform && ln -s <KEY_FILE_PATH> key.json`
-4. Manually enable APIs; when enabling through Terraform, there seems to be race conditions which cause the script to fail
-    * [Cloud Functions](https://console.developers.google.com/apis/api/cloudfunctions.googleapis.com/overview?project=<PROJECT_ID>)
-    * [Cloud Build](https://console.developers.google.com/apis/api/cloudbuild.googleapis.com/overview?project=<PROJECT_ID>)
-    * [Compute](https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=<PROJECT_ID>)
-    * [Cloud Resource Manager](https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=<PROJECT_ID>)
-    * [Cloud SQL](https://console.developers.google.com/apis/api/sqladmin.googleapis.com/overview?project=<PROJECT_ID)
-5. Set the `PROJECT_ID`, `TEMP_BUCKET_NAME`, and `UI_BUCKET_NAME` variables accordingly in the `deploy.sh` file
-6. `cd terraform && terraform init`
-7. Run `./deploy.sh`
-    * Note that during the deploy process, a prompt will appear in the shell that will require confirmation
-8. [Find the IP address of the load balancer](https://console.cloud.google.com/net-services/loadbalancing/loadBalancers/list?project=<PROJECT_ID>)
-    * Navigate to the UI: `http://<IP_ADDRESS>/index.html`
-9. To teardown all infrastructure, run `cd terraform && terraform destroy`
+1. Run `setup.sh`, which will do the following:
+
+    - Install `gcloud` tool suite
+    - Prompt the user for Authentication using `gcloud`
+    - Create a new project
+    - Link billing info to the new project,
+    - Enable all required APIs on the project
+    - Create a service account
+    - Download the service account's key file
+    - Example: `./setup --project-id my-project-id --display-name "My Display Name"`
+2. Run `deploy.sh`, which will do the following:
+    - Install terraform
+    - Detect a virtual environment and prompt the user to create one if necessary
+    - Apply the terraform file
+    - Build and upload the UI
+3. [Optional] Verify successful cloud deployment
+    - After deployment, it may take 3-10 minutes for the changes to propagate to the edge nodes
+    - [Find the IP address of the load balancer](https://console.cloud.google.com/net-services/loadbalancing/loadBalancers/list?project=<PROJECT_ID>)
+    - Navigate to the UI: `http://<IP_ADDRESS>/index.html`
+4. Run `start.sh`
+    - This will start the docker container that hosts the local deployment of the serverless resources
+    - Browse to `http://localhost/index.html`
+5. [Optional] Run `stop.sh`
+    - This will stop the docker container
+6. [Optional] Run `destroy.sh`
+    - This will teardown all cloud resources 
+    - Note that there is currently some problem with terraform's ability to delete the database user. [Do so manually via the cloud console](https://console.cloud.google.com/sql/instances/just-testing/users) to avoid problems *before* running this script
 
 ### Notes
 
 1. After deployment, it may take 3-10 minutes for the changes to propagate to the edge nodes.
 2. Set `export TF_LOG=TRACE` to debug terraform issues
-3. To connect to the Cloud SQL database instance locally, use the [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test)
+3. The docker container reads the terrform state file (`./terraform/terraform.tfstate`) in order to discover which resources it needs to create locally (topics, subscriptions, etc.); it will not start correctly if the project is not deployed to the cloud
+
