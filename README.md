@@ -13,14 +13,15 @@
 
 
 ### Prerequisites
-1. A Google Cloud Platform account with billing enabled
+1. Docker installed
+2. A Google Cloud Platform account with billing enabled
 
 ### Setup
 
 1. Run `setup.sh`, which will do the following:
 
     - Install `gcloud` tool suite
-    - Prompt for Authentication using `gcloud`
+    - Prompt for authentication using `gcloud`
     - Create a new project
     - Link billing info to the new project
     - Enable all required APIs on the project
@@ -32,6 +33,7 @@
     - Detect a virtual environment and prompt to create one if necessary
     - Apply the Terraform file
     - Build and upload the UI files
+    - Note that the first execution must build the Docker container and will take extra time
 3. [Optional] Verify successful cloud deployment
     - After deployment, it may take 3-10 minutes for the changes to propagate to the edge nodes
     - [Find the IP address of the load balancer](https://console.cloud.google.com/net-services/loadbalancing/loadBalancers/list?project=<PROJECT_ID>)
@@ -51,3 +53,30 @@
 2. Set `export TF_LOG=TRACE` to debug Terraform issues
 3. The docker container reads the Terraform state file (`./terraform/terraform.tfstate`) in order to discover which resources it needs to create locally (topics, subscriptions, etc.); it will not start correctly if the project is not deployed to the cloud
 
+### FAQ
+1. How to enable debugging in VS Code?
+    - Each cloud function should have a `config.json` file, with a `debug-port` property that specifies the port on which to listen for debugger connections. The port specified must be unique for each defined cloud function
+    - Create a debug launch configuraton file and add a configuration similar to the following: 
+    <br/><br/>
+    ```
+    {
+        "name": "HTTP Cloud Function",
+        "type": "python",
+        "request": "attach",
+        "connect": {
+            "host": "0.0.0.0",
+            "port": 9000
+        },
+        "pathMappings": [
+            {
+                "localRoot": "${workspaceFolder}/src",
+                "remoteRoot": "/app/workspace/src"
+            }
+        ]
+    }
+    ```
+    - A separate launch configuration is required for each function (only the port needs to be different)
+    - Note that at the time of writting, the debugger does not disconnect; simply restart the container
+    - Note that debugging the `pubsub` function may result in duplicate entries added to the database, due to pubsub thinking that it must retry due to the function not acking expediently
+2. How to enable debugging in PyCharm?
+    - Not supported 

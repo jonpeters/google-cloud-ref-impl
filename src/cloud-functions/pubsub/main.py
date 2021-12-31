@@ -1,6 +1,7 @@
 from db import db
 from sqlalchemy import text
 import functions_framework
+import debug
 
 @functions_framework.cloud_event
 def entry_point(event, context=None):

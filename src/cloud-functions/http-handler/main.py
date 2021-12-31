@@ -6,6 +6,7 @@ from google.cloud import pubsub_v1
 from typing import Callable, List
 import os
 import functions_framework
+import debug
 
 
 @functions_framework.http

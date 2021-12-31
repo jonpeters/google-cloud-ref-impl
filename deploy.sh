@@ -47,7 +47,7 @@ EOF
 )
 if [ -f "./terraform/terraform.tfstate" ]; then
     TF_PROJECT_ID=$(python3 -c "$PYTHON")
-    if [ "$PROJECT_ID" != "$TF_PROJECT_ID" ]; then
+    if [[ ! -z "${TF_PROJECT_ID}" ]] && [ "$PROJECT_ID" != "$TF_PROJECT_ID" ]; then
         echo "Found existing terraform state files for a different project '$TF_PROJECT_ID'; exiting."
         exit
     fi

@@ -66,6 +66,15 @@ for cf_dir in os.scandir("./workspace/src/cloud-functions"):
     env_vars = expression.find(tf_state)[0].value
     # host needs to be set for local function execution
     env_vars["HOST"] = "localhost"
+
+    # read the config file and get the debug port
+    config_path = f"{cf_dir.path}/config.json"
+    if os.path.exists(config_path):
+        with (open(config_path)) as config_file:
+            config = json.loads(config_file.read())
+        debug_port = config.get("debug-port")
+        env_vars["DEBUG_PORT"] = debug_port
+
     env_vars_formatted = " ".join(
         [f"{key}={value}" for key, value in env_vars.items()])
 
@@ -79,9 +88,9 @@ for cf_dir in os.scandir("./workspace/src/cloud-functions"):
         os.system(f"ln -s ../../shared/{entry} {cf_dir.path}/{entry}")
 
     # start hosting the function within functions framework; note that it is assumed every function has an "entry_point" function
-    ff_command = f"""{env_vars_formatted} functions-framework --port {port} --source ./{cf_dir.path}/main.py --target entry_point --debug &>/dev/null &"""
+    ff_command = f"""{env_vars_formatted} functions-framework --port {port} --source ./{cf_dir.path}/main.py --target entry_point &>/dev/null &"""
     os.system(ff_command)
-    print(f"started function '{dir_name}'")
+    print(f"started function '{dir_name}' and debugging on {debug_port}")
 
     # for functions subscribing to topics, create subscription
     expression = parse(
@@ -91,7 +100,8 @@ for cf_dir in os.scandir("./workspace/src/cloud-functions"):
     if len(matches):
         resource_name = matches[0].value
         # resolve the resource name to the full topic path
-        topic_path = [topic_path for topic_path in topic_paths if resource_name in topic_path ][0]
+        topic_path = [
+            topic_path for topic_path in topic_paths if resource_name in topic_path][0]
         create_subscription(topic_path, f"http://localhost:{port}")
 
     # append any nginx config snippets to the nginx config string
@@ -140,4 +150,5 @@ with open("/etc/nginx/sites-available/localhost", "w") as f:
     f.write(nginx_site_config)
 
 # start the ui
-os.system("npm install --prefix ./workspace/src/ui && npm start --prefix ./workspace/src/ui &")
+os.system(
+    "npm install --prefix ./workspace/src/ui && npm start --prefix ./workspace/src/ui &")
