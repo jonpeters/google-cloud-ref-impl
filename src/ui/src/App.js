@@ -9,13 +9,16 @@ function App() {
     setData(e.target.value)
   }
 
-  const handleClick = async () => {
+  const handleSaveClick = async () => {
     const body = data;
     setData("");
     await fetch("/write", {
       method: "POST",
       body
     });
+  }
+
+  const handleRefreshClick = async () => {
     const response = await fetch("/read");
     const array = await response.json();
     setResults(array);
@@ -25,7 +28,8 @@ function App() {
     <div className="App">
       <span>Enter some text to save:</span>
       <input type="text" value={data} onChange={handleChange} />
-      <button type="button" onClick={handleClick}>Save</button>
+      <button type="button" onClick={handleSaveClick}>Save</button>
+      <button type="button" onClick={handleRefreshClick}>Refresh</button>
       <br />
       <ul>
         {results.map(result => <li>{result}</li>)}
